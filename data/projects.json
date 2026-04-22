@@ -60,7 +60,7 @@
     {
   "id": "Olives Restaurant",
   "priority": 70,
-  "type": "md",
+  "type": "small",
   "category": "Full-Stack Development",
   "title": "Olives Restaurant Digital Ecosystem",
   "meta": "Web Application · Client Project",
