@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>BARCLAYNES — All Projects</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -36,6 +36,7 @@
       --f-mono: 'JetBrains Mono', 'Courier New', monospace;
       --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
       --t: 0.45s ease;
+      --safe-top: env(safe-area-inset-top, 0px);
     }
 
     [data-theme="light"] {
@@ -112,6 +113,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 1.2rem 3.5rem;
+      padding-top: calc(1.2rem + var(--safe-top));
       border-bottom: 1px solid var(--border-sub);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
@@ -145,6 +147,7 @@
       white-space: nowrap;
     }
     .nav-back:hover { opacity: 1; }
+    .nav-back-mobile { display: none; }
 
     .btn-theme {
       display: flex;
@@ -545,6 +548,11 @@
     @media (max-width: 620px) {
       .grid { grid-template-columns: 1fr; }
       .nav-left { min-width: auto; }
+      nav {
+        padding-top: max(calc(0.95rem + var(--safe-top)), 1.65rem);
+      }
+      .nav-back-full { display: none; }
+      .nav-back-mobile { display: inline; }
       .cat-head { flex-direction: column; align-items: flex-start; }
       .cat-note { text-align: left; }
       .search-head { flex-direction: column; align-items: flex-start; }
@@ -562,7 +570,7 @@
   <nav>
     <div class="nav-left">
       <a href="index.html" class="nav-logo">BARCLAY<em>NES</em></a>
-      <a class="nav-back" href="index.html">← Back to portfolio</a>
+      <a class="nav-back" href="index.html">← <span class="nav-back-full">Back to portfolio</span><span class="nav-back-mobile">Back</span></a>
     </div>
     <button class="btn-theme" id="themeBtn"><span id="ti">☾</span> <span id="tt">Dark</span></button>
   </nav>

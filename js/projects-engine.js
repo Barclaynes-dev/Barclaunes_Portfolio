@@ -5,6 +5,8 @@
 
 const ProjectsEngine = {
     data: [],
+    homeLimit: 5,
+    closeTimer: null,
     
     // Fetch data with cache busting
     async init() {
@@ -24,47 +26,27 @@ const ProjectsEngine = {
     },
 
     // ─── PORTFOLIO RENDERING (Main Page) ───
-    renderPortfolio(mainGridId, bottomRowId) {
-        const mainGrid = document.getElementById(mainGridId);
-        const bottomRow = document.getElementById(bottomRowId);
-        if (!mainGrid || !bottomRow) return;
+    renderPortfolio(gridId) {
+        const grid = document.getElementById(gridId);
+        if (!grid) return;
 
-        // Clear containers
-        mainGrid.innerHTML = '';
-        bottomRow.innerHTML = '';
+        // Clear container
+        grid.innerHTML = '';
 
-        // Separate by type
-        const featured = this.data.find(p => p.type === 'featured');
-        const smalls = this.data.filter(p => p.type === 'small');
-        const xss = this.data.filter(p => p.type === 'xs');
+        // Home page rule:
+        // - Show highest priority projects up to homeLimit
+        // - Optional override per project: "showOnHome": false to exclude
+        const homeProjects = this.data
+            .filter((p) => p.showOnHome !== false)
+            .slice(0, this.homeLimit);
 
-        // 1. Featured Card
-        if (featured) {
-            mainGrid.innerHTML += this.createCardHTML(featured, 'card-feat');
-        }
-
-        // 2. Small Cards Column
-        const smColumn = document.createElement('div');
-        smColumn.style.display = 'flex';
-        smColumn.style.flexDirection = 'column';
-        smColumn.style.gap = '.7rem';
-        smalls.forEach(p => {
-            smColumn.innerHTML += this.createCardHTML(p, 'card-sm');
+        // Render cards in one dense auto-flow grid
+        homeProjects.forEach((p) => {
+            let cardClass = 'card-xs';
+            if (p.type === 'featured') cardClass = 'card-feat';
+            else if (p.type === 'small') cardClass = 'card-sm';
+            grid.innerHTML += this.createCardHTML(p, cardClass);
         });
-        mainGrid.appendChild(smColumn);
-
-        // 3. XS Cards Row
-        xss.forEach(p => {
-            bottomRow.innerHTML += this.createCardHTML(p, 'card-xs');
-        });
-
-        // 4. Add "More Soon" placeholder if needed
-        bottomRow.innerHTML += `
-            <div class="card card-xs card-empty">
-                <div class="card-empty-plus">+</div>
-                <div class="card-empty-txt">More Soon</div>
-            </div>
-        `;
 
         this.initOverlays();
     },
@@ -78,6 +60,7 @@ const ProjectsEngine = {
         return `
             <div class="card ${cardClass}" data-id="${p.id}">
                 <img class="card-img" src="${p.image}" alt="${p.title}" />
+                <div class="card-grain"></div>
                 <div class="card-overlay"></div>
                 <div class="card-arrow">
                     <svg viewBox="0 0 11 11" fill="none">
@@ -179,8 +162,16 @@ const ProjectsEngine = {
         });
 
         const close = () => {
+            if (!projOv.classList.contains('on') || projOv.classList.contains('closing')) return;
+            projOv.classList.add('closing');
             projOv.classList.remove('on');
-            document.body.style.overflow = '';
+
+            if (this.closeTimer) clearTimeout(this.closeTimer);
+            this.closeTimer = setTimeout(() => {
+                projOv.classList.remove('closing');
+                document.body.style.overflow = '';
+                this.closeTimer = null;
+            }, 700);
         };
 
         projClose?.addEventListener('click', close);
@@ -210,7 +201,7 @@ const ProjectsEngine = {
                         
                         <p class="t-lbl" style="margin-top:2rem;">// core_stack</p>
                         <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.5rem;">
-                            ${p.tags.map(t => `<span class="tag">${t}</span>`).join('')}
+                            ${p.tags.map(t => `<span class="proj-tag">${t}</span>`).join('')}
                         </div>
                     </div>
                     <div>
@@ -237,11 +228,20 @@ const ProjectsEngine = {
             </div>
         `;
 
+        if (this.closeTimer) {
+            clearTimeout(this.closeTimer);
+            this.closeTimer = null;
+        }
+        projOv.classList.remove('closing');
         projOv.classList.add('on');
         document.body.style.overflow = 'hidden';
         
-        // GSAP Reveal
-        gsap.fromTo('#projIn .rev', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" });
+        // GSAP Reveal: use autoAlpha so elements with `.rev` become visible.
+        gsap.fromTo(
+            '#projIn .rev',
+            { autoAlpha: 0, y: 20 },
+            { autoAlpha: 1, y: 0, duration: 0.6, ease: "power2.out" }
+        );
     },
 
     // ─── SEARCH ───
