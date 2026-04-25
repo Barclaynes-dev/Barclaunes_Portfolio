@@ -30,6 +30,8 @@
       --accent2: var(--c-teal);
       --border: rgba(43, 117, 116, 0.22);
       --border-sub: rgba(226, 226, 224, 0.07);
+      --sb-bg: var(--c-dark);
+      --sb-thumb: var(--border);
 
       --f-display: 'Playfair Display', Georgia, serif;
       --f-body: 'Outfit', system-ui, sans-serif;
@@ -48,6 +50,8 @@
       --text-faint: rgba(14, 41, 49, 0.3);
       --border: rgba(43, 117, 116, 0.28);
       --border-sub: rgba(14, 41, 49, 0.08);
+      --sb-bg: #dededc;
+      --sb-thumb: rgba(43, 117, 116, 0.28);
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -64,18 +68,23 @@
     /* ══════════════════════════════════════════
        CUSTOM SCROLLBAR
     ══════════════════════════════════════════ */
+    @property --sb-bg { syntax: '<color>'; inherits: true; initial-value: #0E2931; }
+    @property --sb-thumb { syntax: '<color>'; inherits: true; initial-value: rgba(43, 117, 116, 0.22); }
+
     ::-webkit-scrollbar {
       width: 8px;
     }
 
     ::-webkit-scrollbar-track {
-      background: var(--bg);
+      background: var(--sb-bg);
+      transition: --sb-bg 0.7s ease;
     }
 
     ::-webkit-scrollbar-thumb {
-      background: var(--border);
+      background: var(--sb-thumb);
       border-radius: 100px;
-      border: 2px solid var(--bg);
+      border: 2px solid var(--sb-bg);
+      transition: --sb-thumb 0.7s ease, --sb-bg 0.7s ease;
     }
 
     ::-webkit-scrollbar-thumb:hover {
@@ -85,7 +94,7 @@
     /* Firefox */
     html {
       scrollbar-width: thin;
-      scrollbar-color: var(--border) var(--bg);
+      scrollbar-color: var(--sb-thumb) var(--sb-bg);
     }
 
     a { color: inherit; text-decoration: none; }
@@ -197,6 +206,67 @@
       color: var(--accent);
       background: rgba(43, 117, 116, 0.06);
     }
+
+    /* ══════════════════════════════════════════
+       VIEW TRANSITIONS (Circular Reveal)
+    ══════════════════════════════════════════ */
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation: none;
+      mix-blend-mode: normal;
+    }
+
+    ::view-transition-old(root) {
+      z-index: 1;
+    }
+
+    ::view-transition-new(root) {
+      z-index: 9999;
+    }
+
+    .theme-icon-svg {
+      width: 14px;
+      height: 14px;
+      transition: transform 0.7s var(--ease-out);
+      display: block;
+    }
+
+    [data-theme="light"] .theme-icon-svg {
+      transform: rotate(45deg);
+    }
+
+    .sun-rays {
+      transition: opacity 0.4s var(--ease-out), transform 0.5s var(--ease-out);
+      transform-origin: center;
+    }
+
+    [data-theme="dark"] .sun-rays {
+      opacity: 0;
+      transform: scale(0.5) rotate(90deg);
+    }
+
+    .mask-circle {
+      transition: cx 0.6s var(--ease-out), cy 0.6s var(--ease-out);
+    }
+
+    [data-theme="dark"] .mask-circle {
+      cx: 14;
+      cy: 4;
+    }
+
+    .stars circle {
+      transition: transform 0.8s var(--ease-out), opacity 0.6s var(--ease-out);
+      transform: translateY(10px);
+      opacity: 0;
+    }
+
+    [data-theme="dark"] .stars circle {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .stars circle:nth-child(2) { transition-delay: 0.1s; }
+    .stars circle:nth-child(3) { transition-delay: 0.2s; }
 
     header {
       position: relative;
@@ -647,7 +717,28 @@
     </div>
     <button class="btn-theme" id="themeBtn">
       <span id="ti">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        <svg class="theme-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <mask id="moon-mask">
+            <rect x="0" y="0" width="100%" height="100%" fill="white" />
+            <circle class="mask-circle" cx="24" cy="10" r="7" fill="black" />
+          </mask>
+          <circle class="sun-center" cx="12" cy="12" r="5" mask="url(#moon-mask)" fill="currentColor" />
+          <g class="sun-rays">
+            <line x1="12" y1="1" x2="12" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="23" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="1" y1="12" x2="3" y2="12" />
+            <line x1="21" y1="12" x2="23" y2="12" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+          </g>
+          <g class="stars">
+            <circle cx="17" cy="7" r="0.4" fill="currentColor" />
+            <circle cx="14" cy="16" r="0.4" fill="currentColor" />
+            <circle cx="21" cy="13" r="0.4" fill="currentColor" />
+          </g>
+        </svg>
       </span>
       <span id="tt">Dark</span>
     </button>
@@ -1144,22 +1235,47 @@
     const applyTheme = (theme) => {
       root.setAttribute('data-theme', theme);
       const dark = theme === 'dark';
-      
-      const sunIcon = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
-      const moonIcon = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
-      
-      document.getElementById('ti').innerHTML = dark ? moonIcon : sunIcon;
       document.getElementById('tt').textContent = dark ? 'Dark' : 'Light';
     };
 
     const saved = localStorage.getItem(KEY);
     if (saved === 'light' || saved === 'dark') applyTheme(saved);
 
-    document.getElementById('themeBtn').addEventListener('click', () => {
-      const cur = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
-      const next = cur === 'dark' ? 'light' : 'dark';
-      localStorage.setItem(KEY, next);
-      applyTheme(next);
+    document.getElementById('themeBtn').addEventListener('click', (e) => {
+      const x = e.clientX;
+      const y = e.clientY;
+      const endRadius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+
+      const toggle = () => {
+        const cur = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+        const next = cur === 'dark' ? 'light' : 'dark';
+        localStorage.setItem(KEY, next);
+        applyTheme(next);
+      };
+
+      if (!document.startViewTransition) {
+        toggle();
+        return;
+      }
+
+      const transition = document.startViewTransition(() => {
+        toggle();
+      });
+
+      transition.ready.then(() => {
+        const clipPath = [
+          `circle(0px at ${x}px ${y}px)`,
+          `circle(${endRadius}px at ${x}px ${y}px)`,
+        ];
+        root.animate(
+          { clipPath: [clipPath[0], clipPath[1]] },
+          {
+            duration: 700,
+            easing: 'cubic-bezier(0.65, 0, 0.35, 1)',
+            pseudoElement: '::view-transition-new(root)',
+          }
+        );
+      });
     });
   </script>
 </body>
